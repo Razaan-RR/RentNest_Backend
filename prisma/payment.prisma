@@ -7,13 +7,13 @@ model Payment {
   tenantId String
   tenant User @relation(fields: [tenantId], references: [id])
 
-  amount Float
+  amount Decimal @db.Decimal(10,2)
 
   currency String @default("usd")
 
   provider PaymentProvider @default(STRIPE)
 
-  paymentIntentId String? @unique
+  checkoutSessionId String? @unique
 
   transactionId String?
 

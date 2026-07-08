@@ -27,7 +27,7 @@ model Property {
   category         Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   rentalRequests   RentalRequest[]
-//   reviews          Review[]
+  reviews          Review[]
 
   @@map("properties")
 }

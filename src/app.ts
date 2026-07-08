@@ -42,4 +42,12 @@ app.use("/api/rentals", rentalRequestRoutes);
 app.use("/api/landlord", landlordRoutes);
 app.use("/api/payments", paymentRoutes);
 
+app.get("/success", (req, res) => {
+    res.send("Payment successful. You can close this page.");
+});
+
+app.get("/cancel", (req, res) => {
+    res.send("Payment cancelled.");
+});
+
 export default app;

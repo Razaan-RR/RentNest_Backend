@@ -9,6 +9,7 @@ import { propertyRoutes } from "./modules/property/property.route";
 import { rentalRequestRoutes } from "./modules/rentalRequest/rentalRequest.route";
 import { landlordRoutes } from "./modules/landlord/landlord.route";
 import { paymentRoutes } from "./modules/payment/payment.route";
+import { reviewRoutes } from "./modules/review/review.route";
 
 const app: Application = express();
 
@@ -49,5 +50,7 @@ app.get("/success", (req, res) => {
 app.get("/cancel", (req, res) => {
     res.send("Payment cancelled.");
 });
+
+app.use("/api/reviews", reviewRoutes);
 
 export default app;

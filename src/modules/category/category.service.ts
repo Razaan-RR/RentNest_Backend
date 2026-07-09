@@ -1,8 +1,22 @@
-import { prisma } from "../../lib/prisma";
-import { ICategory } from "./category.interface";
+import AppError from '../../errors/AppError'
+import { prisma } from '../../lib/prisma'
+import { ICategory } from './category.interface'
 
 
 const createCategoryIntoDB = async (payload: ICategory) => {
+
+    const exists = await prisma.category.findUnique({
+        where: {
+            name: payload.name
+        }
+    });
+
+    if (exists) {
+        throw new AppError(
+            400,
+            "Category already exists"
+        );
+    }
 
     const category = await prisma.category.create({
         data: payload
@@ -11,52 +25,47 @@ const createCategoryIntoDB = async (payload: ICategory) => {
     return category;
 };
 
-
 const getAllCategoriesFromDB = async () => {
+  const categories = await prisma.category.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
 
-    const categories = await prisma.category.findMany({
-        orderBy: {
-            createdAt: "desc"
-        }
-    });
-
-    return categories;
-};
-
+  return categories
+}
 
 const updateCategoryIntoDB = async (
-    id: string,
-    payload: Partial<ICategory>
+  id: string,
+  payload: Partial<ICategory>,
 ) => {
+  const category = await prisma.category.update({
+    where: {
+      id,
+    },
+    data: payload,
+  })
 
-    const category = await prisma.category.update({
-        where: {
-            id
-        },
-        data: payload
-    });
+  return category
+}
 
-    return category;
-};
-
-
-const deleteCategoryFromDB = async (
-    id: string
-) => {
-
+const deleteCategoryFromDB = async (id: string) => {
+  try {
     const category = await prisma.category.delete({
-        where: {
-            id
-        }
-    });
+      where: {
+        id,
+      },
+    })
 
-    return category;
-};
-
+    return category
+  } catch (error) {
+    throw new AppError(400, 'Category cannot be deleted while properties exist')
+  }
+}
 
 export const categoryService = {
-    createCategoryIntoDB,
-    getAllCategoriesFromDB,
-    updateCategoryIntoDB,
-    deleteCategoryFromDB
-};
+  createCategoryIntoDB,
+  getAllCategoriesFromDB,
+  updateCategoryIntoDB,
+  deleteCategoryFromDB,
+}

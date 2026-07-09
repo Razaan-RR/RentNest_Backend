@@ -2,6 +2,8 @@ import { Router } from "express";
 import { categoryController } from "./category.controller";
 import { auth } from "../../middlewares/auth";
 import { Role } from "../../../generated/prisma/enums.js";
+import { validateRequest } from "../../middlewares/validateRequest";
+import { createCategoryValidation, updateCategoryValidation } from "./category.validation";
 
 
 const router = Router();
@@ -16,6 +18,7 @@ router.get(
 router.post(
     "/",
     auth(Role.ADMIN),
+    validateRequest(createCategoryValidation),
     categoryController.createCategory
 );
 
@@ -23,6 +26,7 @@ router.post(
 router.put(
     "/:id",
     auth(Role.ADMIN),
+    validateRequest(updateCategoryValidation),
     categoryController.updateCategory
 );
 

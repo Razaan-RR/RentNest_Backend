@@ -1,22 +1,23 @@
-import { Router } from "express";
-import { Role } from "../../../generated/prisma/enums.js";
-import { auth } from "../../middlewares/auth";
-import { userController } from "./user.controller";
+import { Router } from 'express'
+import { Role } from '../../../generated/prisma/enums.js'
+import { auth } from '../../middlewares/auth'
+import { userController } from './user.controller'
+import { validateRequest } from '../../middlewares/validateRequest.js'
+import { registerValidation, updateProfileValidation } from './user.validation.js'
 
-const router = Router();
-
-router.post("/register", userController.registerUser);
+const router = Router()
 
 router.get(
-  "/me",
+  '/me',
   auth(Role.ADMIN, Role.TENANT, Role.LANDLORD),
-  userController.getMyProfile
-);
+  userController.getMyProfile,
+)
 
 router.put(
-  "/my-profile",
+  '/my-profile',
   auth(Role.ADMIN, Role.TENANT, Role.LANDLORD),
-  userController.updateMyProfile
-);
+  validateRequest(updateProfileValidation),
+  userController.updateMyProfile,
+)
 
-export const userRoutes = router;
+export const userRoutes = router

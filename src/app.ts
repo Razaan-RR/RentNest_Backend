@@ -26,7 +26,6 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(globalErrorHandler);
 
 app.get("/", (req: Request, res: Response) => {
     res.status(200).json({
@@ -53,5 +52,6 @@ app.get("/cancel", (req, res) => {
 });
 
 app.use("/api/reviews", reviewRoutes);
+app.use(globalErrorHandler);
 
 export default app;

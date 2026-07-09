@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import httpStatus from 'http-status'
 import config from '../../config'
 import { prisma } from '../../lib/prisma'
 import AppError from '../../errors/AppError'
@@ -12,13 +13,17 @@ const loginUserFromDB = async (email: string, password: string) => {
   })
 
   if (!user) {
-    throw new AppError(404, 'User not found')
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid email or password')
+  }
+
+  if (user.activeStatus === 'BANNED') {
+    throw new AppError(httpStatus.FORBIDDEN, 'Your account has been banned')
   }
 
   const isPasswordMatched = await bcrypt.compare(password, user.password)
 
   if (!isPasswordMatched) {
-    throw new AppError(401, 'Invalid credentials')
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid email or password')
   }
 
   const accessToken = jwt.sign(
@@ -50,7 +55,7 @@ const registerUserIntoDB = async (data: any) => {
   })
 
   if (exists) {
-    throw new AppError(400, 'Email already exists')
+    throw new AppError(httpStatus.CONFLICT, 'Email already exists')
   }
 
   const hashedPassword = await bcrypt.hash(data.password, 12)
@@ -64,13 +69,13 @@ const registerUserIntoDB = async (data: any) => {
     },
   })
 
-  const { password, ...safeUser } = user
+  const { password: _, ...safeUser } = user
 
   return safeUser
 }
 
 const getMeFromDB = async (userId: string) => {
-  const user = await prisma.user.findUniqueOrThrow({
+  const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
@@ -82,11 +87,15 @@ const getMeFromDB = async (userId: string) => {
     },
   })
 
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
   return user
 }
 
 export const authService = {
   loginUserFromDB,
-  getMeFromDB,
   registerUserIntoDB,
+  getMeFromDB,
 }

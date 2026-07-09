@@ -2,8 +2,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import config from '../../config'
 import { prisma } from '../../lib/prisma'
-import AppError from "../../errors/AppError";
-
+import AppError from '../../errors/AppError'
 
 const loginUserFromDB = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
@@ -13,13 +12,13 @@ const loginUserFromDB = async (email: string, password: string) => {
   })
 
   if (!user) {
-    throw new Error('User not found')
+    throw new AppError(404, 'User not found')
   }
 
   const isPasswordMatched = await bcrypt.compare(password, user.password)
 
   if (!isPasswordMatched) {
-    throw new Error('Invalid password')
+    throw new AppError(401, 'Invalid credentials')
   }
 
   const accessToken = jwt.sign(
@@ -43,45 +42,32 @@ const loginUserFromDB = async (email: string, password: string) => {
   }
 }
 
+const registerUserIntoDB = async (data: any) => {
+  const exists = await prisma.user.findUnique({
+    where: {
+      email: data.email,
+    },
+  })
 
+  if (exists) {
+    throw new AppError(400, 'Email already exists')
+  }
 
-const registerUserIntoDB = async(data:any)=>{
+  const hashedPassword = await bcrypt.hash(data.password, 12)
 
-    const exists = await prisma.user.findUnique({
-        where:{
-            email:data.email
-        }
-    });
+  const user = await prisma.user.create({
+    data: {
+      name: data.name,
+      email: data.email,
+      password: hashedPassword,
+      role: data.role,
+    },
+  })
 
+  const { password, ...safeUser } = user
 
-    if(exists){
-        throw new AppError(
-            400,
-            "Email already exists"
-        );
-    }
-
-
-    const hashedPassword = await bcrypt.hash(
-        data.password,
-        12
-    );
-
-
-    const user = await prisma.user.create({
-        data:{
-            name:data.name,
-            email:data.email,
-            password:hashedPassword,
-            role:data.role
-        }
-    });
-
-
-    const {password,...safeUser}=user;
-
-    return safeUser;
-};
+  return safeUser
+}
 
 const getMeFromDB = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({
@@ -102,5 +88,5 @@ const getMeFromDB = async (userId: string) => {
 export const authService = {
   loginUserFromDB,
   getMeFromDB,
-  registerUserIntoDB
+  registerUserIntoDB,
 }

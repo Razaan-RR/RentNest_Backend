@@ -1,7 +1,18 @@
 import { prisma } from '../../lib/prisma'
 import { IProperty } from './property.interface'
+import AppError from '../../errors/AppError'
 
 const createPropertyIntoDB = async (landlordId: string, payload: IProperty) => {
+  const category = await prisma.category.findUnique({
+    where: {
+      id: payload.categoryId,
+    },
+  })
+
+  if (!category) {
+    throw new AppError(404, 'Category not found')
+  }
+
   const property = await prisma.property.create({
     data: {
       ...payload,
@@ -22,10 +33,11 @@ const createPropertyIntoDB = async (landlordId: string, payload: IProperty) => {
 }
 
 const getAllPropertiesFromDB = async (filters: any) => {
-  const { location, propertyType, minPrice, maxPrice } = filters
+  const { location, propertyType, amenities, minPrice, maxPrice } = filters
 
   const properties = await prisma.property.findMany({
     where: {
+      availability: 'AVAILABLE',
       location: location
         ? {
             contains: location,
@@ -34,6 +46,12 @@ const getAllPropertiesFromDB = async (filters: any) => {
         : undefined,
 
       propertyType: propertyType ? propertyType : undefined,
+      amenities: amenities
+        ? {
+            contains: amenities,
+            mode: 'insensitive',
+          }
+        : undefined,
 
       rentAmount: {
         gte: minPrice ? Number(minPrice) : undefined,
@@ -96,14 +114,21 @@ const updatePropertyIntoDB = async (
 }
 
 const deletePropertyFromDB = async (id: string, landlordId: string) => {
-  const property = await prisma.property.delete({
-    where: {
-      id,
-      landlordId,
-    },
-  })
+  try {
+    const property = await prisma.property.delete({
+      where: {
+        id,
+        landlordId,
+      },
+    })
 
-  return property
+    return property
+  } catch {
+    throw new AppError(
+      400,
+      'Property cannot be deleted because rental requests exist',
+    )
+  }
 }
 
 const getLandlordPropertiesFromDB = async (landlordId: string) => {

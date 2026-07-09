@@ -10,6 +10,7 @@ import { rentalRequestRoutes } from "./modules/rentalRequest/rentalRequest.route
 import { landlordRoutes } from "./modules/landlord/landlord.route";
 import { paymentRoutes } from "./modules/payment/payment.route";
 import { reviewRoutes } from "./modules/review/review.route";
+import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 
 const app: Application = express();
 
@@ -25,7 +26,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
+app.use(globalErrorHandler);
 
 app.get("/", (req: Request, res: Response) => {
     res.status(200).json({

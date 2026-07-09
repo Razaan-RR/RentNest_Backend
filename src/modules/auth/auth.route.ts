@@ -10,6 +10,11 @@ router.post(
     authController.loginUser
 );
 
+router.post(
+    "/register",
+    authController.registerUser
+);
+
 router.get(
     "/me",
     auth(Role.ADMIN, Role.TENANT, Role.LANDLORD),

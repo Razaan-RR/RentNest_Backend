@@ -20,6 +20,12 @@ const createCheckoutSessionIntoDB = async (
     },
   })
 
+  const existingPayment = await prisma.payment.findUnique({
+    where: {
+      rentalRequestId: payload.rentalRequestId,
+    },
+  })
+
   if (!rentalRequest) {
     throw new AppError(404, 'Rental request not found')
   }
@@ -30,6 +36,10 @@ const createCheckoutSessionIntoDB = async (
 
   if (rentalRequest.status !== RentalStatus.APPROVED) {
     throw new AppError(400, 'Rental request is not approved yet')
+  }
+
+  if (existingPayment) {
+    throw new AppError(400, 'Payment already created for this rental request')
   }
 
   const amount = Number(rentalRequest.property.rentAmount)

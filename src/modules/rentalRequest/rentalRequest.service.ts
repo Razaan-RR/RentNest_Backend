@@ -41,7 +41,10 @@ const createRentalRequestIntoDB = async (
   const rentalRequest = await prisma.rentalRequest.create({
     data: {
       tenantId,
-      ...payload,
+      propertyId: payload.propertyId,
+      moveInDate: new Date(payload.moveInDate),
+      duration: payload.duration,
+      message: payload.message,
     },
     include: {
       property: {
@@ -128,7 +131,10 @@ const updateRentalRequestStatusIntoDB = async (
     throw new AppError(404, 'Rental request not found')
   }
 
-  if (rentalRequest.status === RentalStatus.REJECTED) {
+  if (
+    rentalRequest.status === RentalStatus.REJECTED ||
+    rentalRequest.status === RentalStatus.COMPLETED
+  ) {
     throw new AppError(400, 'Rental request cannot be updated')
   }
 
@@ -156,6 +162,17 @@ const updateRentalRequestStatusIntoDB = async (
       },
       data: {
         availability: 'RENTED',
+      },
+    })
+  }
+
+  if (payload.status === RentalStatus.COMPLETED) {
+    await prisma.property.update({
+      where: {
+        id: updatedRequest.propertyId,
+      },
+      data: {
+        availability: 'AVAILABLE',
       },
     })
   }

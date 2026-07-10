@@ -2,7 +2,7 @@ import { RentalStatus } from "../../../generated/prisma/enums.js";
 
 export interface IRentalRequest {
     propertyId: string;
-    moveInDate: Date;
+    moveInDate: string;
     duration: number;
     message?: string;
 }

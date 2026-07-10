@@ -3,9 +3,9 @@ import { z } from "zod";
 export const createRentalRequestValidation = z.object({
     body: z.object({
         propertyId: z.string(),
-        moveInDate: z.string(),
+        moveInDate: z.string().date(),
         duration: z.number().positive(),
-        message: z.string().optional()
+        message: z.string().optional(),
     })
 });
 

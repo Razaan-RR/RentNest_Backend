@@ -3,6 +3,7 @@ import config from '../../config'
 import { prisma } from '../../lib/prisma'
 import { RentalStatus, PaymentStatus } from '../../../generated/prisma/enums'
 import { IConfirmPayment, ICreatePayment } from './payment.interface'
+import AppError from '../../errors/AppError'
 
 const stripe = new Stripe(config.stripe_secret_key as string)
 
@@ -20,63 +21,77 @@ const createCheckoutSessionIntoDB = async (
   })
 
   if (!rentalRequest) {
-    throw new Error('Rental request not found')
+    throw new AppError(404, 'Rental request not found')
   }
 
   if (rentalRequest.tenantId !== tenantId) {
-    throw new Error('Unauthorized')
+    throw new AppError(403, 'You are not authorized for this payment')
   }
 
-  if (rentalRequest.status !== 'APPROVED') {
-    throw new Error('Rental request is not approved')
+  if (rentalRequest.status !== RentalStatus.APPROVED) {
+    throw new AppError(400, 'Rental request is not approved yet')
   }
 
   const amount = Number(rentalRequest.property.rentAmount)
-  console.log('SUCCESS URL:', `${config.app_url}/success`)
-  console.log('CANCEL URL:', `${config.app_url}/cancel`)
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
 
-    mode: 'payment',
+  let session
 
-    line_items: [
-      {
-        price_data: {
-          currency: 'usd',
+  try {
+    session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
 
-          product_data: {
-            name: rentalRequest.property.title,
+      mode: 'payment',
+
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+
+            product_data: {
+              name: rentalRequest.property.title,
+            },
+
+            unit_amount: Math.round(amount * 100),
           },
 
-          unit_amount: Math.round(amount * 100),
+          quantity: 1,
         },
+      ],
 
-        quantity: 1,
+      metadata: {
+        rentalRequestId: rentalRequest.id,
+
+        tenantId,
       },
-    ],
 
-    metadata: {
-      rentalRequestId: rentalRequest.id,
+      success_url: `${config.app_url}/success`,
 
-      tenantId,
-    },
+      cancel_url: `${config.app_url}/cancel`,
+    })
+  } catch (error: any) {
+    throw new AppError(
+      500,
+      `Stripe checkout session creation failed: ${error.message}`,
+    )
+  }
 
-    success_url: `${config.app_url}/success`,
+  let payment
 
-    cancel_url: `${config.app_url}/cancel`,
-  })
+  try {
+    payment = await prisma.payment.create({
+      data: {
+        rentalRequestId: rentalRequest.id,
 
-  const payment = await prisma.payment.create({
-    data: {
-      rentalRequestId: rentalRequest.id,
+        tenantId,
 
-      tenantId,
+        amount,
 
-      amount,
-
-      checkoutSessionId: session.id,
-    },
-  })
+        checkoutSessionId: session.id,
+      },
+    })
+  } catch (error: any) {
+    throw new AppError(500, `Payment record creation failed: ${error.message}`)
+  }
 
   return {
     checkoutUrl: session.url,
@@ -85,41 +100,49 @@ const createCheckoutSessionIntoDB = async (
 }
 
 const confirmPaymentIntoDB = async (payload: IConfirmPayment) => {
-  const paymentIntent = await stripe.paymentIntents.retrieve(
-    payload.paymentIntentId,
-  )
+  let session
 
-  if (paymentIntent.status !== 'succeeded') {
-    throw new Error('Payment not completed.')
+  try {
+    session = await stripe.checkout.sessions.retrieve(payload.checkoutSessionId)
+  } catch (error: any) {
+    throw new AppError(400, `Invalid Stripe checkout session: ${error.message}`)
   }
 
-  const payment = await prisma.payment.findFirst({
+  if (session.payment_status !== 'paid') {
+    throw new AppError(400, 'Payment not completed')
+  }
+
+  const payment = await prisma.payment.findUnique({
     where: {
-      paymentIntentId: payload.paymentIntentId,
+      checkoutSessionId: payload.checkoutSessionId,
     },
   })
 
   if (!payment) {
-    throw new Error('Payment not found.')
+    throw new AppError(404, 'Payment record not found')
   }
 
   if (payment.status === PaymentStatus.COMPLETED) {
     return payment
   }
 
-  // Update payment
-  const updatedPayment = await prisma.payment.update({
-    where: {
-      id: payment.id,
-    },
-    data: {
-      status: PaymentStatus.COMPLETED,
-      transactionId: paymentIntent.id,
-      paidAt: new Date(),
-    },
-  })
+  let updatedPayment
 
-  // Activate rental
+  try {
+    updatedPayment = await prisma.payment.update({
+      where: {
+        id: payment.id,
+      },
+      data: {
+        status: PaymentStatus.COMPLETED,
+        transactionId: session.payment_intent as string,
+        paidAt: new Date(),
+      },
+    })
+  } catch (error: any) {
+    throw new AppError(500, `Payment update failed: ${error.message}`)
+  }
+
   await prisma.rentalRequest.update({
     where: {
       id: payment.rentalRequestId,
@@ -129,7 +152,6 @@ const confirmPaymentIntoDB = async (payload: IConfirmPayment) => {
     },
   })
 
-  // Make property unavailable
   const rentalRequest = await prisma.rentalRequest.findUnique({
     where: {
       id: payment.rentalRequestId,
@@ -198,7 +220,7 @@ const getSinglePaymentFromDB = async (tenantId: string, paymentId: string) => {
   })
 
   if (!payment) {
-    throw new Error('Payment not found.')
+    throw new AppError(404, 'Payment not found')
   }
 
   return payment

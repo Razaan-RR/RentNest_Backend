@@ -3,5 +3,5 @@ export interface ICreatePayment {
 }
 
 export interface IConfirmPayment {
-    paymentIntentId: string;
+    checkoutSessionId: string;
 }

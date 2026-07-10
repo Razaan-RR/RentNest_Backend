@@ -11,6 +11,7 @@ import { landlordRoutes } from "./modules/landlord/landlord.route";
 import { paymentRoutes } from "./modules/payment/payment.route";
 import { reviewRoutes } from "./modules/review/review.route";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
+import { adminRoutes } from "./modules/admin/admin.route";
 
 const app: Application = express();
 
@@ -52,6 +53,7 @@ app.get("/cancel", (req, res) => {
 });
 
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/admin", adminRoutes);
 app.use(globalErrorHandler);
 
 export default app;

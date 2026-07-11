@@ -18,7 +18,7 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
 })
 
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id!
 
   if (!id) {
     throw new Error('User ID is required')

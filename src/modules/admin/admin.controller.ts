@@ -1,75 +1,72 @@
-import { Request, Response } from "express";
-import httpStatus from "http-status";
-import { catchAsync } from "../../utils/catchAsync";
-import { sendResponse } from "../../utils/sendResponse";
-import { adminService } from "./admin.service";
+import { Request, Response } from 'express'
+import httpStatus from 'http-status'
+import { catchAsync } from '../../utils/catchAsync'
+import { sendResponse } from '../../utils/sendResponse'
+import { adminService } from './admin.service'
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+  const users = await adminService.getAllUsersFromDB()
 
-    const users = await adminService.getAllUsersFromDB();
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "Users retrieved successfully",
-        data: {
-            users
-        }
-    });
-
-});
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Users retrieved successfully',
+    data: {
+      users,
+    },
+  })
+})
 
 const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params
 
-    const user = await adminService.updateUserStatusIntoDB(
-        req.params.id,
-        req.body.activeStatus
-    );
+  if (!id) {
+    throw new Error('User ID is required')
+  }
 
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "User status updated successfully",
-        data: {
-            user
-        }
-    });
+  const activeStatus = req.body.activeStatus as 'ACTIVE' | 'BANNED'
 
-});
+  const user = await adminService.updateUserStatusIntoDB(id, activeStatus)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User status updated successfully',
+    data: {
+      user,
+    },
+  })
+})
 
 const getAllProperties = catchAsync(async (req: Request, res: Response) => {
+  const properties = await adminService.getAllPropertiesFromDB()
 
-    const properties = await adminService.getAllPropertiesFromDB();
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "Properties retrieved successfully",
-        data: {
-            properties
-        }
-    });
-
-});
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Properties retrieved successfully',
+    data: {
+      properties,
+    },
+  })
+})
 
 const getAllRentalRequests = catchAsync(async (req: Request, res: Response) => {
+  const rentals = await adminService.getAllRentalRequestsFromDB()
 
-    const rentals = await adminService.getAllRentalRequestsFromDB();
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "Rental requests retrieved successfully",
-        data: {
-            rentals
-        }
-    });
-
-});
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Rental requests retrieved successfully',
+    data: {
+      rentals,
+    },
+  })
+})
 
 export const adminController = {
-    getAllUsers,
-    updateUserStatus,
-    getAllProperties,
-    getAllRentalRequests
-};
+  getAllUsers,
+  updateUserStatus,
+  getAllProperties,
+  getAllRentalRequests,
+}

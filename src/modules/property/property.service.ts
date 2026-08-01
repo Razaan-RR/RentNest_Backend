@@ -33,11 +33,12 @@ const createPropertyIntoDB = async (landlordId: string, payload: IProperty) => {
 }
 
 const getAllPropertiesFromDB = async (filters: any) => {
-  const { location, propertyType, amenities, minPrice, maxPrice } = filters
-
+  const { location, propertyType, amenities, minPrice, maxPrice, categoryId } =
+    filters
   const properties = await prisma.property.findMany({
     where: {
       availability: 'AVAILABLE',
+
       location: location
         ? {
             contains: location,
@@ -46,6 +47,9 @@ const getAllPropertiesFromDB = async (filters: any) => {
         : undefined,
 
       propertyType: propertyType ? propertyType : undefined,
+
+      categoryId: categoryId ? categoryId : undefined,
+
       amenities: amenities
         ? {
             contains: amenities,
@@ -55,7 +59,6 @@ const getAllPropertiesFromDB = async (filters: any) => {
 
       rentAmount: {
         gte: minPrice ? Number(minPrice) : undefined,
-
         lte: maxPrice ? Number(maxPrice) : undefined,
       },
     },

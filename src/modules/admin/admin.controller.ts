@@ -64,9 +64,23 @@ const getAllRentalRequests = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getAdminStats = catchAsync(async (req: Request, res: Response) => {
+  const stats = await adminService.getAdminStatsFromDB()
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Admin stats retrieved successfully',
+    data: {
+      stats,
+    },
+  })
+})
+
 export const adminController = {
   getAllUsers,
   updateUserStatus,
   getAllProperties,
   getAllRentalRequests,
+  getAdminStats
 }

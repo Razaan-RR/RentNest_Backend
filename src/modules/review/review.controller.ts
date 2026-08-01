@@ -1,77 +1,58 @@
-import { Request, Response } from "express";
-import httpStatus from "http-status";
-import { catchAsync } from "../../utils/catchAsync";
-import { sendResponse } from "../../utils/sendResponse";
-import { reviewService } from "./review.service";
+import { Request, Response } from 'express'
+import httpStatus from 'http-status'
+import { catchAsync } from '../../utils/catchAsync'
+import { sendResponse } from '../../utils/sendResponse'
+import { reviewService } from './review.service'
 
+const createReview = catchAsync(async (req: Request, res: Response) => {
+  const review = await reviewService.createReviewIntoDB(req.user!.id, req.body)
 
-const createReview = catchAsync(
-    async (req: Request, res: Response) => {
+  sendResponse(res, {
+    success: true,
 
+    statusCode: httpStatus.CREATED,
 
-        const review =
-            await reviewService.createReviewIntoDB(
-                req.user!.id,
-                req.body
-            );
+    message: 'Review created successfully',
 
+    data: {
+      review,
+    },
+  })
+})
 
-        sendResponse(res, {
+const getPropertyReviews = catchAsync(async (req: Request, res: Response) => {
+  const reviews = await reviewService.getPropertyReviewsFromDB(
+    req.params.id as string,
+  )
 
-            success: true,
+  sendResponse(res, {
+    success: true,
 
-            statusCode:
-                httpStatus.CREATED,
+    statusCode: httpStatus.OK,
 
-            message:
-                "Review created successfully",
+    message: 'Property reviews fetched successfully',
 
-            data: {
-                review
-            }
+    data: {
+      reviews,
+    },
+  })
+})
 
-        });
+const getMyReviews = catchAsync(async (req: Request, res: Response) => {
+  const reviews = await reviewService.getMyReviewsFromDB(req.user!.id)
 
-    }
-);
-
-
-
-const getPropertyReviews = catchAsync(
-    async (req: Request, res: Response) => {
-
-
-        const reviews =
-            await reviewService.getPropertyReviewsFromDB(
-                req.params.id as string
-            );
-
-
-        sendResponse(res, {
-
-            success: true,
-
-            statusCode:
-                httpStatus.OK,
-
-            message:
-                "Property reviews fetched successfully",
-
-            data: {
-                reviews
-            }
-
-        });
-
-    }
-);
-
-
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'My reviews fetched successfully',
+    data: {
+      reviews,
+    },
+  })
+})
 
 export const reviewController = {
-
-    createReview,
-
-    getPropertyReviews
-
-};
+  createReview,
+  getPropertyReviews,
+  getMyReviews
+}

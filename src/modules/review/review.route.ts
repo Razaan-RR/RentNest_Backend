@@ -15,10 +15,14 @@ router.post(
 );
 
 router.get(
+  '/my',
+  auth(Role.TENANT),
+  reviewController.getMyReviews,
+)
+
+router.get(
     "/property/:id",
     reviewController.getPropertyReviews
 );
-
-
 
 export const reviewRoutes = router;

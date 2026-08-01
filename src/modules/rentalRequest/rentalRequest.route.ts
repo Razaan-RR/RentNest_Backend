@@ -3,10 +3,14 @@ import { Role } from '../../../generated/prisma/enums.js'
 import { auth } from '../../middlewares/auth'
 import { rentalRequestController } from './rentalRequest.controller'
 import { validateRequest } from '../../middlewares/validateRequest.js'
-import { createRentalRequestValidation, updateRentalStatusValidation } from './rentalRequest.validation.js'
+import {
+  createRentalRequestValidation,
+  updateRentalStatusValidation,
+} from './rentalRequest.validation.js'
 
 const router = Router()
 
+// Tenant creates rental request
 router.post(
   '/',
   auth(Role.TENANT),
@@ -14,14 +18,24 @@ router.post(
   rentalRequestController.createRentalRequest,
 )
 
+// Tenant sees own requests
 router.get('/', auth(Role.TENANT), rentalRequestController.getMyRentalRequests)
 
+// Landlord sees requests for own properties
+router.get(
+  '/landlord',
+  auth(Role.LANDLORD),
+  rentalRequestController.getLandlordRequests,
+)
+
+// Tenant single request
 router.get(
   '/:id',
   auth(Role.TENANT),
   rentalRequestController.getSingleRentalRequest,
 )
 
+// Landlord update request status
 router.patch(
   '/:id',
   auth(Role.LANDLORD),

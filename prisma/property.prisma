@@ -18,6 +18,8 @@ model Property {
   propertyType     String
   amenities        String?
 
+  images           String[]
+
   availability     AvailabilityStatus @default(AVAILABLE)
 
   createdAt        DateTime @default(now())

@@ -12,7 +12,8 @@ export const createPropertyValidation = z.object({
         area: z.number().optional(),
         propertyType: z.string(),
         amenities: z.string().optional(),
-        categoryId: z.string()
+        categoryId: z.string(),
+        images: z.array(z.string()).optional(),
     })
 });
 

@@ -19,6 +19,8 @@ export interface IProperty {
 
     amenities?: string;
 
+    images?: string[];
+
     availability?: AvailabilityStatus;
 
     categoryId: string;

@@ -1,30 +1,25 @@
-import httpStatus from "http-status";
-import AppError from "../../errors/AppError";
-import { IUpdateProfile } from "./profile.interface";
-import { prisma } from "../../lib/prisma";
+import httpStatus from 'http-status'
+import AppError from '../../errors/AppError'
+import { IUpdateProfile } from './profile.interface'
+import { prisma } from '../../lib/prisma'
 
-const updateProfileIntoDB = async (
-  userId: string,
-  payload: IUpdateProfile
-) => {
+const updateProfileIntoDB = async (userId: string, payload: IUpdateProfile) => {
   // Check user exists
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
-  });
+  })
 
   if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found')
   }
 
   const profileData = {
     ...(payload.phone !== undefined && { phone: payload.phone }),
     ...(payload.avatar !== undefined && { avatar: payload.avatar }),
     ...(payload.dateOfBirth !== undefined && {
-      dateOfBirth: payload.dateOfBirth
-        ? new Date(payload.dateOfBirth)
-        : null,
+      dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : null,
     }),
     ...(payload.address !== undefined && { address: payload.address }),
     ...(payload.city !== undefined && { city: payload.city }),
@@ -34,7 +29,7 @@ const updateProfileIntoDB = async (
       postalCode: payload.postalCode,
     }),
     ...(payload.bio !== undefined && { bio: payload.bio }),
-  };
+  }
 
   const profile = await prisma.profile.upsert({
     where: {
@@ -45,11 +40,22 @@ const updateProfileIntoDB = async (
       userId,
       ...profileData,
     },
-  });
+  })
 
-  return profile;
-};
+  return profile
+}
+
+const getProfileFromDB = async (userId: string) => {
+  const profile = await prisma.profile.findUnique({
+    where: {
+      userId,
+    },
+  })
+
+  return profile
+}
 
 export const ProfileService = {
   updateProfileIntoDB,
-};
+  getProfileFromDB
+}

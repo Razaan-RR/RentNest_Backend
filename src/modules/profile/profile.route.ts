@@ -1,17 +1,23 @@
-import express from "express";
-import { ProfileController } from "./profile.controller";
-import { ProfileValidation } from "./profile.validation";
-import { auth } from "../../middlewares/auth";
-import { validateRequest } from "../../middlewares/validateRequest";
-import { Role } from "../../../generated/prisma/enums";
+import express from 'express'
+import { ProfileController } from './profile.controller'
+import { ProfileValidation } from './profile.validation'
+import { auth } from '../../middlewares/auth'
+import { validateRequest } from '../../middlewares/validateRequest'
+import { Role } from '../../../generated/prisma/enums'
 
-const router = express.Router();
+const router = express.Router()
 
 router.patch(
-  "/",
-  auth(Role.TENANT, Role.LANDLORD),
+  '/',
+  auth(Role.TENANT, Role.LANDLORD, Role.ADMIN),
   validateRequest(ProfileValidation.updateProfileValidationSchema),
-  ProfileController.updateProfile
-);
+  ProfileController.updateProfile,
+)
 
-export const ProfileRoutes = router;
+router.get(
+  '/',
+  auth(Role.TENANT, Role.LANDLORD, Role.ADMIN),
+  ProfileController.getProfile,
+)
+
+export const ProfileRoutes = router

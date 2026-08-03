@@ -15,7 +15,10 @@ import { adminRoutes } from "./modules/admin/admin.route";
 import { ProfileRoutes } from "./modules/profile/profile.route";
 
 const app: Application = express();
-
+console.log("Allowed frontend:", [
+  "http://localhost:3000",
+  "https://rent-nest-frontend-seven.vercel.app",
+]);
 
 app.use(
     cors({

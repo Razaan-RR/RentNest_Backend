@@ -19,7 +19,10 @@ const app: Application = express();
 
 app.use(
     cors({
-        origin: config.app_url,
+        origin: [
+            "http://localhost:3000",
+            "https://rent-nest-frontend-seven.vercel.app",
+        ],
         credentials: true,
     })
 );
